@@ -121,7 +121,7 @@ public class FXMLController implements Initializable {
         drawButtonStatic.setOnMouseClicked(event -> {
 
             try {
-                instance.drawCards(false);
+                instance.drawCard(false);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

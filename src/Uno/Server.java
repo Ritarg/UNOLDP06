@@ -12,8 +12,6 @@ public class Server {
     private static Socket s;
     // lista para guardar clientes
     private static final List<ClientHandler> listaClientes = new ArrayList<>();
-    // lista para guardar os nomes dos clientes
-    private static final List<String> nomesClientes = new ArrayList<>();
     private static int i = 0;
 
     public static void main(String[] args) throws IOException {
@@ -126,17 +124,15 @@ public class Server {
                         recebido = dis.readUTF();
 
                         if (recebido.startsWith("#nome")) {
-                            String nomeAux = recebido.split("-")[1];
-                            System.out.println("Jogador " + nomeAux + " pronto.");
-                            nomesClientes.add(nomeAux);
-                            name = nomeAux;
+                            name = recebido.split("-")[1];
+                            System.out.println("Jogador " + name + " pronto.");
                             // quando ele tiver 2 jogadores inicia o jogo
                             boolean ready = listaClientes.size() == 2;
                             boolean vez = this.geraVez();
                             for (ClientHandler c : listaClientes) {
                                 if (!c.code.equals(code) && c.isloggedin) {
                                     // #nome-nomeJogador-pronto-vez
-                                    String message = "#nome-" + nomeAux + "-" + "pronto-" + !vez;
+                                    String message = "#nome-" + name + "-" + "pronto-" + !vez;
                                     System.out.println("Mensagem enviada pelo Servidor: " + message);
                                     c.dos.writeUTF(message);
                                 } else {
@@ -149,17 +145,6 @@ public class Server {
                                 }
                             }
                         }
-                        // ao receber a mensagem ele ira enviar ao outro jogador a informacao desta jogada
-                        /*if (recebido.startsWith("Jogador#")) {
-                            String[] r = recebido.split("#");
-                            System.out.println(r[1]);
-                            for (ClientHandler c : listaClientes) {
-                                if (!c.code.equals(code)) {
-                                    c.dos.writeUTF(recebido);
-                                }
-                            }
-
-                        }*/
 
                     } catch (IOException e) {
                         throw new RuntimeException(e);

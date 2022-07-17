@@ -31,10 +31,10 @@ public class GameControls {
      */
     public GameControls(final DataOutputStream out) {
 
-        //Platform.runLater(() -> {
-        this.out = out;
-        this.control = new ControlUNO(FXMLController.nameInStatic.getText());
-        //});
+        Platform.runLater(() -> {
+            this.out = out;
+            this.control = new ControlUNO(FXMLController.nameInStatic.getText());
+        });
 
     }
 
@@ -47,17 +47,17 @@ public class GameControls {
             FXMLController.nameOut1Static.setVisible(false);
             FXMLController.nameInStatic.setVisible(false);
             FXMLController.text_unoStatic.setVisible(false);
-            //});
             setVisibilty(false);
+        });
 
-            for (int i = 0; i < control.cards().getDrawPile().size(); i++) {
-                ImageView temp = new ImageView(control.cards().getDrawPile().get(i).getBackIcon());
-                Platform.runLater(() -> FXMLController.drawPileStatic.getChildren().add(temp));
-            }
-            //As cartas são baralhadas para dar aos jogadores
-            reshuffle();
+        for (int i = 0; i < control.cards().getDrawPile().size(); i++) {
+            ImageView temp = new ImageView(control.cards().getDrawPile().get(i).getBackIcon());
+            Platform.runLater(() -> FXMLController.drawPileStatic.getChildren().add(temp));
+        }
+        //As cartas são baralhadas para dar aos jogadores
+        reshuffle();
 
-            //Platform.runLater(() -> {
+        Platform.runLater(() -> {
             String msg = "#nome-" + FXMLController.nameInStatic.getText();
             System.out.println("Mensagem enviada pelo Jogador " + control.getPlayer().getName() + ": " + msg);
             try {
@@ -65,25 +65,23 @@ public class GameControls {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            //});
+        });
 
-            //initGame(false);
-            //Cartas do Jogador 2 que aparecem escondidas, ou seja mostra apenas a parte de tras das cartas
-            IndividualCardView top = control.cards().getDrawPile().peek();
-            top.setFaceDown(true);
-            //Vai buscar as cartas ao baralho
-            IndividualCardView tempCard = control.cards().getDrawPile().pop();
-            ImageView temp = new ImageView(tempCard.getIcon());
-            control.cards().getDiscardPile().add(tempCard);
-            //Platform.runLater(() -> {
+        //Cartas do Jogador 2 que aparecem escondidas, ou seja mostra apenas a parte de tras das cartas
+        IndividualCardView top = control.cards().getDrawPile().peek();
+        top.setFaceDown(true);
+        //Vai buscar as cartas ao baralho
+        IndividualCardView tempCard = control.cards().getDrawPile().pop();
+        ImageView temp = new ImageView(tempCard.getIcon());
+        control.cards().getDiscardPile().add(tempCard);
+        Platform.runLater(() -> {
             FXMLController.drawPileStatic.getChildren().remove(FXMLController.drawPileStatic.getChildren().size() - 1);
             FXMLController.discardPileStatic.getChildren().add(temp);
             //Remove a imagem do Logo
             FXMLController.anchorStatic.getChildren().remove(FXMLController.startStatic);
-            //});
-            //Mostra a carta inicial jogada
-            control.setCurrentCard(control.cards().getDiscardPile().peek());
         });
+        //Mostra a carta inicial jogada
+        control.setCurrentCard(control.cards().getDiscardPile().peek());
     }
 
     /* Método Draw - Jogadores fazem uma jogada
@@ -92,7 +90,7 @@ public class GameControls {
      * As cartas descartadas vão para a pilha de cartas do StackPane com o fx:id="discardPile"
      * playerOneHBox - container onde se encontram exibidas as cartas do Jogador 1
      * playerTwoHBox - container onde se encontram exibidas as cartas do Jogador 2*/
-    public void drawCards(final boolean isInitialPlay) throws IOException {
+    public void drawCard(final boolean isInitialPlay) throws IOException {
 
         Platform.runLater(() -> {
             FXMLController.drawPileStatic.getChildren().remove(FXMLController.drawPileStatic.getChildren().size() - 1);
@@ -101,38 +99,34 @@ public class GameControls {
             FXMLController.playerOneHBoxStatic.getChildren().add(temp);
             FXMLController.txtFieldStatic.setText("\nJogaste uma carta, é a vez do adversario");
             FXMLController.txtFieldStatic.setStyle("-fx-text-fill: red; -fx-font-size: 16px;");
-            //});
-
-            // se nao for initGame, envia msg ao outro jogador
-            if (!isInitialPlay) {
-                String msg = "#card-draw-" + control.getPlayer();
-                System.out.println("Mensagem enviada pelo Jogador " + control.getPlayer().getName() + ": " + msg);
-                try {
-                    this.out.writeUTF(msg);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                control.getPlayer().setMyTurn(false);
-            }
         });
+
+        // se nao for initGame, envia msg ao outro jogador
+        if (!isInitialPlay) {
+            String msg = "#card-draw-" + control.getPlayer();
+            System.out.println("Mensagem enviada pelo Jogador " + control.getPlayer().getName() + ": " + msg);
+            try {
+                this.out.writeUTF(msg);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            control.getPlayer().setMyTurn(false);
+        }
     }
 
     //Passo inicial do Jogo onde os Jogadores recebem uma mão de 7 Cartas
     public void initGame(final boolean myTurn) throws IOException {
 
-        Platform.runLater(() -> {
-            for (int i = 0; i < 7; i++) {
-                try {
-                    drawCards(true);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                //Platform.runLater(() -> FXMLController.txtFieldStatic.setText("\nTodos os Jogadores recebem 7 cartas"));
-                FXMLController.txtFieldStatic.setText("\nTodos os Jogadores recebem 7 cartas");
+        for (int i = 0; i < 7; i++) {
+            try {
+                drawCard(true);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
+            Platform.runLater(() -> FXMLController.txtFieldStatic.setText("\nTodos os Jogadores recebem 7 cartas"));
+        }
 
-            control.getPlayer().setMyTurn(myTurn);
-        });
+        control.getPlayer().setMyTurn(myTurn);
     }
 
     public void select() {
@@ -167,165 +161,84 @@ public class GameControls {
                         break;
                     }
                 }
-                //});
-                //Se o Jogador 1 jogar uma carta Joker+4 este deve selecionar a cor que deseja
-                //O Jogador 2 recebe 4 cartas aleatoriamente tiradas do baralho
-                String playerCard = control.getPlayer().getCards().get(index).getName();
-                if (control.getPlayer().getCards().get(index).getName().equals("noneplusfour-1")) {
-                    playerOneDiscard(index);
-                    control.setCurrentCard(control.cards().getDiscardPile().peek());
-                    for (int i = 0; i < 4; i++) {
-                        //playerTwoDraw();
-                    }
-                    //Platform.runLater(() -> {
+            });
+            //Se o Jogador 1 jogar uma carta Joker+4 este deve selecionar a cor que deseja
+            //O Jogador 2 recebe 4 cartas aleatoriamente tiradas do baralho
+            String playerCard = control.getPlayer().getCards().get(index).getName();
+            if (control.getPlayer().getCards().get(index).getName().equals("noneplusfour-1")) {
+                playerOneDiscard(index);
+                control.setCurrentCard(control.cards().getDiscardPile().peek());
+                for (int i = 0; i < 4; i++) {
+                    //playerTwoDraw();
+                }
+                Platform.runLater(() -> {
                     FXMLController.txtFieldStatic.setText("\nJogaste uma carta Joker+4, escolhe a cor");
                     FXMLController.txtFieldStatic.setStyle("-fx-text-fill: green; -fx-font-size: 16px;");
                     if (control.getPlayer().getCards().size() == 0) {
                         FXMLController.txtFieldStatic.setStyle("-fx-text-fill: green; -fx-font-size: 16px;");
 
                     }
-                    //});
+                });
 
-                    isWild = true;
-                    isVisible(true);
-                    //control.setCurrentPlayer(control.getPlayerTwo());
+                isWild = true;
+                isVisible(true);
+                //control.setCurrentPlayer(control.getPlayerTwo());
 
-                    //Se o Jogador 1 jogar uma carta Joker este deve selecionar a cor que deseja
-                } else if (control.getPlayer().getCards().get(index).getName().equals("nonewild-1")) {
-                    //Platform.runLater(() -> {
+                //Se o Jogador 1 jogar uma carta Joker este deve selecionar a cor que deseja
+            } else if (control.getPlayer().getCards().get(index).getName().equals("nonewild-1")) {
+                Platform.runLater(() -> {
                     FXMLController.txtFieldStatic.setText("\nJogaste uma carta Joker, escolhe a cor");
                     FXMLController.txtFieldStatic.setStyle("-fx-text-fill: red; -fx-font-size: 16px;");
-                    //});
+                });
 
-                    playerOneDiscard(index);
-                    control.setCurrentCard(control.cards().getDiscardPile().peek());
-                    if (control.getPlayer().getCards().size() == 0) {
-                        //Platform.runLater(() -> FXMLController.txtFieldStatic.setText("Ganhaste o Jogo"));
-                        FXMLController.txtFieldStatic.setText("Ganhaste o Jogo");
-                        setGameWon(true);
-                    }
-                    isWild = true;
-                    isVisible(true);
-                    //control.setCurrentPlayer(control.getPlayerTwo());
-                    // Add visibility
+                playerOneDiscard(index);
+                control.setCurrentCard(control.cards().getDiscardPile().peek());
+                if (control.getPlayer().getCards().size() == 0) {
+                    Platform.runLater(() -> FXMLController.txtFieldStatic.setText("Ganhaste o Jogo"));
+                    setGameWon(true);
                 }
-                //Se o Jogador 1 jogar uma carta +2 o Jogador 2 recebe 2 cartas aleatoriamente tiradas do baralho
-                String substring = playerCard.substring(playerCard.length() - 9, playerCard.length() - 2);
-                System.out.println(substring);
-                if (substring.equals("plustwo") && control.matches(control.getPlayer().getCards().get(index))) {
-                    control.cards().getDiscardPile().push(control.getPlayer().getCards().get(index));
-                    playerOneDiscard(index);
-                    control.setCurrentCard(control.cards().getDiscardPile().peek());
-                    for (int i = 0; i < 2; i++) {
-                        //playerTwoDraw();
-                    }
-                    /*Se o tamanho for igual a 0, significa que o Jogador não possui mais cartas
-                     * ou seja, este ganha o jogo */
-                    if (control.getPlayer().getCards().size() == 0) {
-                        //Platform.runLater(() -> {
+                isWild = true;
+                isVisible(true);
+                //control.setCurrentPlayer(control.getPlayerTwo());
+                // Add visibility
+            }
+            //Se o Jogador 1 jogar uma carta +2 o Jogador 2 recebe 2 cartas aleatoriamente tiradas do baralho
+            String substring = playerCard.substring(playerCard.length() - 9, playerCard.length() - 2);
+            System.out.println(substring);
+            if (substring.equals("plustwo") && control.matches(control.getPlayer().getCards().get(index))) {
+                control.cards().getDiscardPile().push(control.getPlayer().getCards().get(index));
+                playerOneDiscard(index);
+                control.setCurrentCard(control.cards().getDiscardPile().peek());
+                for (int i = 0; i < 2; i++) {
+                    //playerTwoDraw();
+                }
+                /*Se o tamanho for igual a 0, significa que o Jogador não possui mais cartas
+                 * ou seja, este ganha o jogo */
+                if (control.getPlayer().getCards().size() == 0) {
+                    Platform.runLater(() -> {
                         FXMLController.txtFieldStatic.setText("Ganhaste o Jogo");
                         FXMLController.txtFieldStatic.setStyle("-fx-text-fill: green; -fx-font-size: 16px;");
-                        //});
+                    });
 
-                        setGameWon(true);
-                    }
-                    //control.setCurrentPlayer(control.getPlayerTwo());
-                } else if (control.matches(control.getPlayer().getCards().get(index))) {
-                    control.cards().getDiscardPile().push(control.getPlayer().getCards().get(index));
-                    playerOneDiscard(index);
-                    control.setCurrentCard(control.cards().getDiscardPile().peek());
-                    if (control.getPlayer().getCards().size() == 0) {
-                        //Platform.runLater(() -> {
+                    setGameWon(true);
+                }
+                //control.setCurrentPlayer(control.getPlayerTwo());
+            } else if (control.matches(control.getPlayer().getCards().get(index))) {
+                control.cards().getDiscardPile().push(control.getPlayer().getCards().get(index));
+                playerOneDiscard(index);
+                control.setCurrentCard(control.cards().getDiscardPile().peek());
+                if (control.getPlayer().getCards().size() == 0) {
+                    Platform.runLater(() -> {
                         FXMLController.txtFieldStatic.setText("Ganhaste o Jogo");
                         FXMLController.txtFieldStatic.setStyle("-fx-text-fill: green; -fx-font-size: 16px;");
-                        //});
+                    });
 
-                        setGameWon(true);
-                    }
-                    //control.setCurrentPlayer(control.getPlayerTwo());
+                    setGameWon(true);
                 }
-            });
+                //control.setCurrentPlayer(control.getPlayerTwo());
+            }
         }
     }
-
-    /* Manipula as ações do Jogador2 */
-    /*public void playerTwoHandles() {
-        if (isGameWon == false) {
-            if (control.getCurrentPlayer().getCards().size() == 0) {
-                txtField.setText("Jogador 2 ganhou");
-                txtField.setStyle("-fx-text-fill: red; -fx-font-size: 16px;");
-
-            }
-            if (control.cards().getDrawPile().size() == 0) {
-                reshuffle();
-            }
-            String[] color = {"yellow", "blue", "red", "green"};
-            String playerTwoChoice = "";
-            for (int i = 0; i < control.getPlayerTwo().getCards().size(); i++) {
-                IndividualCardView playerCard = control.getPlayerTwo().getCards().get(i);
-                if (control.matches((control.getPlayerTwo().getCards().get(i))) == false) {
-                    continue;
-                }
-                if (playerCard.getName().substring(playerCard.getName().length() - 9, playerCard.getName().length() - 2).equals("plustwo") &&
-                        control.matches(control.getPlayerTwo().getCards().get(i))) {
-
-                } else if (control.matches(control.getPlayerTwo().getCards().get(i)) == true && !(playerCard.getNumber().equals("-1"))) {
-                    //playerTwoDiscard(i);
-                    control.setCurrentCard(control.cards().getDiscardPile().peek());
-                    if (control.getCurrentPlayer().getCards().size() == 0) {
-                        txtField.setText("Jogador 2 ganhou");
-                        txtField.setStyle("-fx-text-fill: red; -fx-font-size: 16px;");
-                        setGameWon(true);
-                    }
-                    control.setCurrentPlayer(control.getPlayerOne());
-                    return;
-                } else if (control.getPlayerTwo().getCards().get(i).getName().equals("noneplusfour-1")) {
-                    playerTwoChoice = color[(int) (Math.random() * (color.length))];
-
-
-                    //playerTwoDiscard(i);
-
-                    control.cards().getDiscardPile().peek().setColor(playerTwoChoice);
-                    control.setCurrentCard(control.cards().getDiscardPile().peek());
-                    if (control.getCurrentPlayer().getCards().size() == 0) {
-                        txtField.setText("Jogador 2 ganhou");
-                        txtField.setStyle("-fx-text-fill: red; -fx-font-size: 16px;");
-                        setGameWon(true);
-
-                    }
-                    for (int j = 0; j < 4; j++) {
-                        playerOneDraw();
-                    }
-                    txtField.setText("Jogador 2 jogou carta Joker+4, escolheu a cor " + playerTwoChoice);
-                    txtField.setStyle("-fx-text-fill: red; -fx-font-size: 16px;");
-
-                    control.setCurrentPlayer(control.getPlayerOne());
-                    return;
-                } else if (control.getPlayerTwo().getCards().get(i).getName().equals("nonewild-1")) {
-                    playerTwoChoice = color[(int) (Math.random() * (color.length))];
-                    txtField.setText("Jogador 2 jogou carta Joker, escolheu a cor  " + playerTwoChoice);
-                    txtField.setStyle("-fx-text-fill: red; -fx-font-size: 16px;");
-
-
-                    //playerTwoDiscard(i);
-
-                    control.cards().getDiscardPile().peek().setColor(playerTwoChoice);
-                    control.setCurrentCard(control.cards().getDiscardPile().peek());
-                    if (control.getCurrentPlayer().getCards().size() == 0) {
-                        txtField.setText("Jogador 2 ganhou");
-                        txtField.setStyle("-fx-text-fill: red; -fx-font-size: 16px;");
-                        setGameWon(true);
-
-                    }
-                    control.setCurrentPlayer(control.getPlayerOne());
-                    return;
-                }
-
-
-            }
-            //playerTwoDraw();
-        }
-    }*/
 
     /* Baralha as cartas */
     public void reshuffle() {
@@ -409,16 +322,6 @@ public class GameControls {
         Platform.runLater(() -> FXMLController.discardPileStatic.getChildren().add(FXMLController.playerOneHBoxStatic.getChildren().remove(n)));
     }
 
-    //Descarte do Jogador 2
-    /*public void playerTwoDiscard(int n) {
-        if (control.matches(control.getPlayerTwo().getCards().get(n))) {
-            ImageView temp = new ImageView(control.getPlayerTwo().getCards().get(n).getIcon());
-            control.cards().getDiscardPile().push(control.getPlayerTwo().getCards().remove(n));
-            playerTwoHBox.getChildren().remove(n);
-            discardPile.getChildren().add(temp);
-        }
-    }*/
-
     public void setGameWon(boolean gameWon) {
 
         isGameWon = gameWon;
@@ -439,16 +342,15 @@ public class GameControls {
 
     public void setVisibilty(final boolean visible) {
 
-        //Platform.runLater(() -> {
-        FXMLController.txtFieldStatic.setVisible(visible);
-        FXMLController.drawPileStatic.setVisible(visible);
-        FXMLController.discardPileStatic.setVisible(visible);
-        FXMLController.playerOneHBoxStatic.setVisible(visible);
-        FXMLController.playerTwoHBoxStatic.setVisible(visible);
-        FXMLController.drawButtonStatic.setVisible(visible);
-        FXMLController.drawButtonStatic.setVisible(visible);
-        FXMLController.text_waitStatic.setVisible(!visible);
-        //});
+        Platform.runLater(() -> {
+            FXMLController.txtFieldStatic.setVisible(visible);
+            FXMLController.drawPileStatic.setVisible(visible);
+            FXMLController.discardPileStatic.setVisible(visible);
+            FXMLController.playerOneHBoxStatic.setVisible(visible);
+            FXMLController.playerTwoHBoxStatic.setVisible(visible);
+            FXMLController.drawButtonStatic.setVisible(visible);
+            FXMLController.text_waitStatic.setVisible(!visible);
+        });
     }
 
     //Quando uma carta Joker é jogada torna se visivel a seleção da cor para a carta da proxima jogada
