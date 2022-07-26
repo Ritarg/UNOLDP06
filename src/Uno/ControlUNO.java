@@ -9,13 +9,15 @@ public class ControlUNO {
     private Player player;
 
     //Estabelece os nomes dos Jogadores e o Baralho de cartas de cada um
-    public ControlUNO(final String name) {
-        this.player = new Player(name);
+    public ControlUNO() {
+
+        this.player = new Player();
         this.unoDeck = new CardsView();
     }
 
     //Método get que vai retornar o jogador do momento
     public Player getPlayer() {
+
         return player;
     }
 

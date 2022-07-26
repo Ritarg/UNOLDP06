@@ -57,9 +57,9 @@ public class CardsView {
         } while (indexOfCard < 100);
 
         drawPile = cards;
-        discardPile = new Stack<IndividualCardView>();
-        drawPileView = new Stack<ImageView>();
-        discardPileView = new Stack<ImageView>();
+        discardPile = new Stack<>();
+        drawPileView = new Stack<>();
+        discardPileView = new Stack<>();
         Collections.shuffle(drawPile);
     }
 

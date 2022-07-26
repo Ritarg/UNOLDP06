@@ -9,31 +9,35 @@ public class Player {
     private final ArrayList<IndividualCardView> cards;
     //Contém a Lista das Imagem das Cartas que se encontra na classe cardsView
     private final ArrayList<ImageView> cardsView;
-    private final String name;
+    private String name;
     private boolean myTurn = false;
 
-    public Player(final String name) {
-        this.name = name;
+    public Player() {
+
         this.cards = new ArrayList<>();
         this.cardsView = new ArrayList<>();
     }
 
     //Método que desenha
-    public void draw(IndividualCardView drawnCard) {
+    public void draw(final IndividualCardView drawnCard) {
+
         cards.add(drawnCard);
     }
 
     //Vai buscar as cartas do jogador
     public ArrayList<IndividualCardView> getCards() {
+
         return this.cards;
     }
 
     public ArrayList<ImageView> getCardsView() {
+
         return this.cardsView;
     }
 
     //método que Remove as cartas da Classe IndividualCardView
-    public IndividualCardView remove(IndividualCardView removedCard) {
+    public IndividualCardView remove(final IndividualCardView removedCard) {
+
         for (int i = 0; i < cards.size(); i++) {
             if (cards.get(i).equals(removedCard)) {
                 return cards.remove(i);
@@ -44,15 +48,23 @@ public class Player {
         return cards.get(0);
     }
 
+    public void setName(final String name) {
+
+        this.name = name;
+    }
+
     public String getName() {
+
         return name;
     }
 
     public boolean isMyTurn() {
+
         return myTurn;
     }
 
-    public void setMyTurn(boolean myTurn) {
+    public void setMyTurn(final boolean myTurn) {
+
         this.myTurn = myTurn;
     }
 }

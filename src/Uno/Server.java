@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Stack;
 
 public class Server {
     private static final int serverPort = 18080;
@@ -30,10 +31,10 @@ public class Server {
                         // buscar o input e output do cliente
                         DataInputStream dis = new DataInputStream(s.getInputStream());
                         DataOutputStream dos = new DataOutputStream(s.getOutputStream());
-                        ObjectInputStream in = new ObjectInputStream(s.getInputStream());
+                        ObjectInputStream objIn = new ObjectInputStream(s.getInputStream());
                         ObjectOutputStream objOut = new ObjectOutputStream(s.getOutputStream());
 
-                        ClientHandler mtch = new ClientHandler(s, "client " + i, dis, dos, i, in, objOut);
+                        ClientHandler mtch = new ClientHandler(s, "client " + i, dis, dos, i, objIn, objOut);
                         Thread t = new Thread(mtch);
                         // a lista de clientes serve para ter rapido acesso aos clientes na logica
                         listaClientes.add(mtch);
@@ -55,15 +56,19 @@ public class Server {
      */
     private static class ClientHandler implements Runnable {
 
-        Socket s;
+        private final Socket s;
         private final String code;
-        final DataInputStream dis;
-        final DataOutputStream dos;
-        final int id;
-        ObjectInputStream in;
-        ObjectOutputStream objOut;
+        private final DataInputStream dis;
+        private final DataOutputStream dos;
+        private final int id;
+        private final ObjectInputStream objIn;
+        private final ObjectOutputStream objOut;
         private String name;
-        boolean isloggedin;
+        private boolean isloggedin;
+        private boolean isReady;
+        private static String recebido;
+        private List<IndividualCardView> deck;
+        private Stack<IndividualCardView> drawPile;
 
 
         private ClientHandler(Socket s, String code, DataInputStream dis, DataOutputStream dos, int id, ObjectInputStream objIn, ObjectOutputStream objOut) {
@@ -73,29 +78,50 @@ public class Server {
             this.dis = dis;
             this.dos = dos;
             this.id = id;
-            this.in = objIn;
+            this.objIn = objIn;
             this.objOut = objOut;
             this.name = null;
             this.isloggedin = true;
+            this.isReady = false;
         }
 
-        private boolean geraVez() {
+        private boolean randomTurn() {
+
             boolean result = false;
-            Random r = new Random();
-            int random = r.nextInt();
+
+            int random = new Random().nextInt();
             if (random % 2 == 0) result = true;
+
             return result;
         }
 
-        private String getNomeOutroJogador(final String codeJogador) {
+        private String getOpponentName(final String codeJogador) {
+
             String result = "";
             for (ClientHandler c : listaClientes) {
                 if (!c.code.equals(codeJogador)) result = c.name;
             }
+
             return result;
         }
 
-        static String recebido;
+        private boolean isReady() {
+
+            boolean result = true;
+
+            if (Server.listaClientes.size() < 2) {
+                result = false;
+            } else {
+                for (ClientHandler c : Server.listaClientes) {
+                    if (!c.isReady) {
+                        result = false;
+                        break;
+                    }
+                }
+            }
+
+            return result;
+        }
 
         @Override
         public void run() {
@@ -103,7 +129,7 @@ public class Server {
             if (Server.listaClientes.size() > 2) {
                 try {
                     String msg = "#salacheia";
-                    System.out.println("Mensagem enviada pelo Servidor: " + msg);
+                    System.out.println("Mensagem enviada: " + msg);
                     dos.writeUTF(msg);
                     // remove da lista de clientes
                     Server.listaClientes.remove(this);
@@ -124,33 +150,46 @@ public class Server {
                         recebido = dis.readUTF();
 
                         if (recebido.startsWith("#nome")) {
+                            // msg: #nome-nomeJogador
                             name = recebido.split("-")[1];
                             System.out.println("Jogador " + name + " pronto.");
-                            // quando ele tiver 2 jogadores inicia o jogo
-                            boolean ready = listaClientes.size() == 2;
-                            boolean vez = this.geraVez();
+                            DeckInfo deckInfo = (DeckInfo) objIn.readObject();
+                            deck = deckInfo.getDeck();
+                            drawPile = deckInfo.getDrawPile();
+                            System.out.println("Deck adversario: \n" + deckInfo);
+                            isReady = true;
+                            // quando tiver 2 jogadores inicia o jogo
+                            boolean ready = isReady();
+                            boolean turn = this.randomTurn();
+
                             for (ClientHandler c : listaClientes) {
                                 if (!c.code.equals(code) && c.isloggedin) {
-                                    // #nome-nomeJogador-pronto-vez
-                                    String message = "#nome-" + name + "-" + "pronto-" + !vez;
-                                    System.out.println("Mensagem enviada pelo Servidor: " + message);
+                                    // enviar: #nome-nomeJogador
+                                    String message = "#nome-" + name;
+                                    if (ready) {
+                                        // enviar: #nome-nomeJogador-pronto-vez
+                                        message += "-" + "pronto-" + !turn;
+                                    }
+                                    System.out.println("Mensagem enviada: " + message);
                                     c.dos.writeUTF(message);
+                                    c.objOut.writeObject(deckInfo);
                                 } else {
                                     if (ready) {
                                         // #pronto-nomeAdversario-vez
-                                        String msg = "#pronto-" + getNomeOutroJogador(code) + "-" + vez;
-                                        System.out.println("Mensagem enviada pelo Servidor: " + msg);
+                                        String msg = "#pronto-" + getOpponentName(code) + "-" + turn;
+                                        System.out.println("Mensagem enviada: " + msg);
                                         c.dos.writeUTF(msg);
                                     }
                                 }
                             }
                         }
 
-                    } catch (IOException e) {
+                    } catch (IOException | ClassNotFoundException e) {
                         throw new RuntimeException(e);
                     }
                 }
             });
+
             client.start();
         }
     }

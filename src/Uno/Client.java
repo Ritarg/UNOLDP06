@@ -26,7 +26,7 @@ public class Client extends Application {
     static DataInputStream in;
     static DataOutputStream out;
     static ObjectOutputStream objOut;
-    static ObjectInputStream inObj;
+    static ObjectInputStream objIn;
     private GameControls instance;
     private Stage stage;
 
@@ -56,11 +56,11 @@ public class Client extends Application {
         out = new DataOutputStream(socket.getOutputStream());
 
         objOut = new ObjectOutputStream(socket.getOutputStream());
-        inObj = new ObjectInputStream(socket.getInputStream());
+        objIn = new ObjectInputStream(socket.getInputStream());
 
         // Thread que serve para o cliente enviar mensagens para o servidor
         Thread enviarMensagem = new Thread(() -> {
-            instance = new GameControls(out);
+            instance = new GameControls(out, objOut);
             FXMLController.handleEvents(instance);
         });
 
@@ -79,12 +79,13 @@ public class Client extends Application {
                         });
 
                     } else if (msg.startsWith("#nome")) {
-                        // #nome-nomeJogador ou #nome-nomeJogador-pronto-vez
+                        // msg: #nome-nomeJogador ou #nome-nomeJogador-pronto-vez
                         String[] msgSplit = msg.split("-");
+                        DeckInfo opponentDeck = (DeckInfo) objIn.readObject();
+                        instance.setOpponentDeck(opponentDeck);
                         // verifica se o jogo se encontra pronto para começar
                         if (msgSplit.length == 4 && msgSplit[2].equals("pronto")) {
                             instance.initGame(Boolean.parseBoolean(msgSplit[3]));
-                            //instance.playerDraw(Boolean.parseBoolean(msgSplit[3]));
                             // esconde label de espera e mostra o jogo
                             Platform.runLater(() -> {
                                 instance.setVisibilty(true);
@@ -94,10 +95,11 @@ public class Client extends Application {
                             });
                         }
                     } else if (msg.startsWith("#pronto")) {
-                        // #pronto-nomeJogador-vez
+                        // msg: #pronto-nomeJogador-vez
+                        DeckInfo opponentDeck = (DeckInfo) objIn.readObject();
+                        instance.setOpponentDeck(opponentDeck);
                         String[] msgSplit = msg.split("-");
                         instance.initGame(Boolean.parseBoolean(msgSplit[2]));
-                        //instance.playerDraw(Boolean.parseBoolean(msgSplit[2]));
                         // esconde label de espera e mostra o jogo
                         Platform.runLater(() -> {
                             instance.setVisibilty(true);
@@ -107,13 +109,13 @@ public class Client extends Application {
                         });
                     }
 
-                } catch (IOException e) {
+                } catch (IOException | ClassNotFoundException e) {
                     throw new RuntimeException(e);
                 }
             }
         });
 
-        lerMensagem.start();
         enviarMensagem.start();
+        lerMensagem.start();
     }
 }
