@@ -85,10 +85,10 @@ public class Client extends Application {
                         instance.setOpponentDeck(opponentDeck);
                         // verifica se o jogo se encontra pronto para começar
                         if (msgSplit.length == 4 && msgSplit[2].equals("pronto")) {
-                            instance.initGame(Boolean.parseBoolean(msgSplit[3]));
+                            instance.initGame(Boolean.parseBoolean(msgSplit[3]), false);
                             // esconde label de espera e mostra o jogo
+                            instance.setVisibilty(true);
                             Platform.runLater(() -> {
-                                instance.setVisibilty(true);
                                 FXMLController.nameOut1Static.setVisible(true);
                                 FXMLController.nameInStatic.setVisible(false);
                                 FXMLController.text_unoStatic.setVisible(false);
@@ -99,10 +99,10 @@ public class Client extends Application {
                         DeckInfo opponentDeck = (DeckInfo) objIn.readObject();
                         instance.setOpponentDeck(opponentDeck);
                         String[] msgSplit = msg.split("-");
-                        instance.initGame(Boolean.parseBoolean(msgSplit[2]));
+                        instance.initGame(Boolean.parseBoolean(msgSplit[2]), true);
                         // esconde label de espera e mostra o jogo
+                        instance.setVisibilty(true);
                         Platform.runLater(() -> {
-                            instance.setVisibilty(true);
                             FXMLController.nameOut1Static.setVisible(true);
                             FXMLController.nameInStatic.setVisible(false);
                             FXMLController.text_unoStatic.setVisible(false);

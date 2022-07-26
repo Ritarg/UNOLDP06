@@ -1,6 +1,5 @@
 package Uno;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Stack;
@@ -29,8 +28,11 @@ public class DeckInfo implements Serializable {
     @Override
     public String toString() {
 
-        return "[Deck] " + deck + ";\n" +
-                "[DrawPile] " + drawPile;
+        return "[DECK INFO]" +
+                "\n------------------\n" +
+                "[Deck][" + deck.size() + "]" + deck + "\n" +
+                "[DrawPile][" + drawPile.size() + "]" + drawPile + "\n" +
+                "------------------\n";
     }
 
 }

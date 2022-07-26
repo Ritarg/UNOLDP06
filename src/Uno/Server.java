@@ -95,11 +95,25 @@ public class Server {
             return result;
         }
 
-        private String getOpponentName(final String codeJogador) {
+        private String getOpponentName(final String code) {
 
             String result = "";
+
             for (ClientHandler c : listaClientes) {
-                if (!c.code.equals(codeJogador)) result = c.name;
+                if (!c.code.equals(code)) result = c.name;
+            }
+
+            return result;
+        }
+
+        private DeckInfo getOpponentDeck(final String code) {
+
+            DeckInfo result = null;
+
+            for (ClientHandler c : listaClientes) {
+                if (!c.code.equals(code)) {
+                    result = new DeckInfo(c.deck, c.drawPile);
+                }
             }
 
             return result;
@@ -109,10 +123,10 @@ public class Server {
 
             boolean result = true;
 
-            if (Server.listaClientes.size() < 2) {
+            if (listaClientes.size() < 2) {
                 result = false;
             } else {
-                for (ClientHandler c : Server.listaClientes) {
+                for (ClientHandler c : listaClientes) {
                     if (!c.isReady) {
                         result = false;
                         break;
@@ -126,13 +140,13 @@ public class Server {
         @Override
         public void run() {
 
-            if (Server.listaClientes.size() > 2) {
+            if (listaClientes.size() > 2) {
                 try {
                     String msg = "#salacheia";
                     System.out.println("Mensagem enviada: " + msg);
                     dos.writeUTF(msg);
                     // remove da lista de clientes
-                    Server.listaClientes.remove(this);
+                    listaClientes.remove(this);
 
                     this.isloggedin = false;
                     this.s.close();
@@ -156,7 +170,6 @@ public class Server {
                             DeckInfo deckInfo = (DeckInfo) objIn.readObject();
                             deck = deckInfo.getDeck();
                             drawPile = deckInfo.getDrawPile();
-                            System.out.println("Deck adversario: \n" + deckInfo);
                             isReady = true;
                             // quando tiver 2 jogadores inicia o jogo
                             boolean ready = isReady();
@@ -179,6 +192,8 @@ public class Server {
                                         String msg = "#pronto-" + getOpponentName(code) + "-" + turn;
                                         System.out.println("Mensagem enviada: " + msg);
                                         c.dos.writeUTF(msg);
+                                        DeckInfo opponentDeck = getOpponentDeck(code);
+                                        c.objOut.writeObject(opponentDeck);
                                     }
                                 }
                             }

@@ -8,6 +8,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Stack;
 
 /**
  * Classe auxiliar à classe {@link FXMLController}.
@@ -40,40 +41,19 @@ public class GameControls {
         this.control = new ControlUNO();
     }
 
-    public DeckInfo deal() {
-
-        // da 7 cartas
-        for (int i = 0; i < 7; i++) {
-            control.getPlayer().draw(control.cards().getDrawPile().pop());
-        }
-
-        return myDeck = new DeckInfo(control.getPlayer().getCards(), control.cards().getDrawPile());
-    }
-
-    public void initGame(final boolean myTurn) throws IOException {
-
-        control.getPlayer().setMyTurn(myTurn);
-        // desenha cartas do jogador 1
-        for (IndividualCardView card : myDeck.getDeck()) {
-            Platform.runLater(() -> FXMLController.playerOneHBoxStatic.getChildren().add(new ImageView(card.getIcon())));
-        }
-        // desenha cartas do oponente
-        for (IndividualCardView card : opponentDeck.getDeck()) {
-            Platform.runLater(() -> FXMLController.playerTwoHBoxStatic.getChildren().add(new ImageView(card.getBackIcon())));
-        }
-    }
-
     //Botão inicial, Imagem/Icon do UNO que ao carregar inicia o Jogo
     public void handleStartButton() throws IOException {
 
-        // controla visibilidade dos elementos iniciais
         Platform.runLater(() -> {
+            // controla visibilidade dos elementos iniciais
             final String name = FXMLController.nameInStatic.getText();
             FXMLController.nameOut1Static.setText(name);
             FXMLController.nameOut1Static.setVisible(false);
             FXMLController.nameInStatic.setVisible(false);
             FXMLController.text_unoStatic.setVisible(false);
             setVisibilty(false);
+            // remove a imagem do Logo
+            FXMLController.anchorStatic.getChildren().remove(FXMLController.startStatic);
             // set player name
             this.control.getPlayer().setName(name);
             // desenha DrawPile
@@ -82,32 +62,58 @@ public class GameControls {
             }
             try {
                 writeString("#nome-" + this.control.getPlayer().getName());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            // As cartas são baralhadas para dar aos jogadores
-            reshuffle();
-            // distribui 7 cartas
-            try {
+                // As cartas são baralhadas para dar aos jogadores
+                reshuffle();
+                // distribui 7 cartas
                 writeObject(deal());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    public DeckInfo deal() {
+
+        // da 7 cartas
+        final Stack<IndividualCardView> drawPile = control.cards().getDrawPile();
+
+        for (int i = 0; i < 7; i++) {
+            control.getPlayer().draw(drawPile.pop());
+            FXMLController.drawPileStatic.getChildren().remove(FXMLController.drawPileStatic.getChildren().size() - 1);
+        }
+
+        return myDeck = new DeckInfo(control.getPlayer().getCards(), drawPile);
+    }
+
+    public void initGame(final boolean myTurn, final boolean isFirstMoveDone) throws IOException {
+
+        control.getPlayer().setMyTurn(myTurn);
 
         Platform.runLater(() -> {
-            // mostra ultima carta da DrawPile, virada para baixo
-            control.cards().getDrawPile().peek().setFaceDown(true);
+            // desenha cartas do jogador 1
+            for (IndividualCardView card : myDeck.getDeck()) {
+                FXMLController.playerOneHBoxStatic.getChildren().add(new ImageView(card.getIcon()));
+            }
+            // desenha cartas do oponente
+            System.out.println("Deck adversario:\n" + opponentDeck.getDeck());
+            for (IndividualCardView card : opponentDeck.getDeck()) {
+                FXMLController.playerTwoHBoxStatic.getChildren().add(new ImageView(card.getBackIcon()));
+            }
             // a primeira "jogada" é a carta que sai da drawPile para a discardPile, para dar início ao jogo
-            final IndividualCardView firstCard = control.cards().getDrawPile().pop();
-            final ImageView temp = new ImageView(firstCard.getIcon());
-            control.cards().getDiscardPile().add(firstCard);
-            FXMLController.drawPileStatic.getChildren().remove(FXMLController.drawPileStatic.getChildren().size() - 1);
-            FXMLController.discardPileStatic.getChildren().add(temp);
-            //Remove a imagem do Logo
-            FXMLController.anchorStatic.getChildren().remove(FXMLController.startStatic);
-            //Mostra a carta inicial jogada
-            control.setCurrentCard(control.cards().getDiscardPile().peek());
+            // so pode ocorrer uma vez
+            if (!isFirstMoveDone) {
+                final IndividualCardView firstCard = control.cards().getDrawPile().pop();
+                control.cards().getDiscardPile().add(firstCard);
+                logDecks();
+                // define a carta atual
+                setCurrentCard();
+                // atualiza drawPileStatic e discardPileStatic
+                FXMLController.drawPileStatic.getChildren().remove(FXMLController.drawPileStatic.getChildren().size() - 1);
+                FXMLController.discardPileStatic.getChildren().add(new ImageView(firstCard.getIcon()));
+            } else {
+                // apenas desenha
+                // validar instancias do initGame
+            }
         });
     }
 
@@ -193,7 +199,7 @@ public class GameControls {
             String playerCard = control.getPlayer().getCards().get(index).getName();
             if (control.getPlayer().getCards().get(index).getName().equals("noneplusfour-1")) {
                 discard(index);
-                control.setCurrentCard(control.cards().getDiscardPile().peek());
+                setCurrentCard();
                 for (int i = 0; i < 4; i++) {
                     //playerTwoDraw();
                 }
@@ -218,7 +224,7 @@ public class GameControls {
                 });
 
                 discard(index);
-                control.setCurrentCard(control.cards().getDiscardPile().peek());
+                setCurrentCard();
                 if (control.getPlayer().getCards().size() == 0) {
                     Platform.runLater(() -> FXMLController.txtFieldStatic.setText("Ganhaste o Jogo"));
                     setGameWon(true);
@@ -234,7 +240,7 @@ public class GameControls {
             if (substring.equals("plustwo") && control.matches(control.getPlayer().getCards().get(index))) {
                 control.cards().getDiscardPile().push(control.getPlayer().getCards().get(index));
                 discard(index);
-                control.setCurrentCard(control.cards().getDiscardPile().peek());
+                setCurrentCard();
                 for (int i = 0; i < 2; i++) {
                     //playerTwoDraw();
                 }
@@ -252,7 +258,7 @@ public class GameControls {
             } else if (control.matches(control.getPlayer().getCards().get(index))) {
                 control.cards().getDiscardPile().push(control.getPlayer().getCards().get(index));
                 discard(index);
-                control.setCurrentCard(control.cards().getDiscardPile().peek());
+                setCurrentCard();
                 if (control.getPlayer().getCards().size() == 0) {
                     Platform.runLater(() -> {
                         FXMLController.txtFieldStatic.setText("Ganhaste o Jogo");
@@ -271,20 +277,16 @@ public class GameControls {
 
         control.cards().shuffleDrawPile();
 
-        Platform.runLater(() -> {
-            if (FXMLController.discardPileStatic.getChildren().size() > 0) {
-                for (int i = 0; i < FXMLController.discardPileStatic.getChildren().size() - 1; i++) {
-                    FXMLController.discardPileStatic.getChildren().remove(i);
-                }
-            }
-            for (int i = 0; i < control.cards().getDrawPile().size(); i++) {
-                ImageView temp = new ImageView(control.cards().getDrawPile().get(i).getBackIcon());
-                FXMLController.drawPileStatic.getChildren().add(i, temp);
-            }
+        // remove todas as cartas da DiscardPile
+        if (FXMLController.discardPileStatic.getChildren().size() > 0) {
+            FXMLController.discardPileStatic.getChildren().clear();
+        }
+        for (IndividualCardView drawPile : control.cards().getDrawPile()) {
+            FXMLController.drawPileStatic.getChildren().add(new ImageView(drawPile.getBackIcon()));
+        }
 
-            FXMLController.txtFieldStatic.setText("Shuffled the draw deck");
-            FXMLController.txtFieldStatic.setStyle("-fx-text-fill: green; -fx-font-size: 16px;");
-        });
+        FXMLController.txtFieldStatic.setText("Shuffled the draw deck");
+        FXMLController.txtFieldStatic.setStyle("-fx-text-fill: green; -fx-font-size: 16px;");
     }
 
     //Seleciona a cor das cartas
@@ -372,7 +374,7 @@ public class GameControls {
     }
 
     //Quando uma carta Joker é jogada torna se visivel a seleção da cor para a carta da proxima jogada
-    public void isVisible(boolean visible) {
+    private void isVisible(boolean visible) {
 
         Platform.runLater(() -> {
             if (visible) {
@@ -389,28 +391,42 @@ public class GameControls {
         });
     }
 
+    private void logDecks() {
+
+        final Stack<IndividualCardView> drawPile = control.cards().getDrawPile();
+        final Stack<IndividualCardView> discardPile = control.cards().getDiscardPile();
+
+        System.out.println("[TABLE INFO]" + "\n------------------\n" + "[DrawPile][" + drawPile.size() + "]" + drawPile);
+        System.out.println("[DiscardPile][" + discardPile.size() + "]" + discardPile + "\n------------------\n");
+    }
+
+    private void setCurrentCard() {
+
+        control.setCurrentCard(control.cards().getDiscardPile().peek());
+    }
+
     public void setOpponentDeck(final DeckInfo opponentDeck) {
 
         this.opponentDeck = opponentDeck;
     }
 
-    public void writeString(final String msg) throws IOException {
+    private void writeString(final String msg) throws IOException {
 
         if (msg == null) {
             throw new RuntimeException("Cannot write null String to DataOutputStream.");
         }
 
-        this.dos.writeUTF(msg);
         System.out.println("Mensagem enviada: " + msg);
+        this.dos.writeUTF(msg);
     }
 
-    public void writeObject(final DeckInfo deck) throws IOException {
+    private void writeObject(final DeckInfo deck) throws IOException {
 
         if (deck == null) {
             throw new RuntimeException("Cannot write null Object to ObjectOutputStream.");
         }
 
-        this.objectOut.writeObject(deck);
         System.out.println(deck);
+        this.objectOut.writeObject(deck);
     }
 }
