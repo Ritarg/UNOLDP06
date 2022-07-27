@@ -1,126 +1,126 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.image.*?>
-<?import javafx.scene.shape.*?>
-<?import javafx.scene.text.*?>
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.image.ImageView?>
-<?import javafx.scene.image.Image?>
 <?import javafx.scene.shape.Rectangle?>
-<?import javafx.scene.text.Text?>
+<?import javafx.scene.text.*?>
+<AnchorPane id="AnchorPane" fx:id="anchor" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity"
+            minWidth="-Infinity" prefHeight="900.0" prefWidth="1605.0" xmlns="http://javafx.com/javafx/8"
+            xmlns:fx="http://javafx.com/fxml/1" fx:controller="Uno.FXMLController">
 
-<AnchorPane id="AnchorPane" fx:id="Anchor" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseMoved="#mouseMoved" prefHeight="900.0" prefWidth="1605.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Uno.gameControls">
-    <children>
+    <ImageView id="background.jpg" fitHeight="911.0" fitWidth="1604.0"
+               layoutY="-8.0">
+        <Image url="@../background.png"/>
+    </ImageView>
 
-        <ImageView id="background.jpg" depthTest="INHERIT" fitHeight="911.0" fitWidth="1604.0" layoutX="0.0" layoutY="-8.0" preserveRatio="false">
+    <ImageView fx:id="start" fitHeight="300" fitWidth="500" layoutX="611.0" layoutY="216.0" preserveRatio="true">
+        <Image url="@../logo.png"/>
+    </ImageView>
+    <StackPane fx:id="discardPile" layoutX="675.0" layoutY="333.0" prefHeight="100.0" prefWidth="100.0"/>
 
-            <image>
+    <Rectangle id="playerTwo" arcHeight="10.0" arcWidth="10.0" fill="BLACK" height="175.0" layoutX="100.0"
+               layoutY="20.0" opacity="0.19" stroke="BLACK" strokeType="INSIDE" width="1400.0"/>
 
-                <Image url="@../background.png" />
+    <HBox id="playerTwoHBox" fx:id="playerTwoHBox" layoutX="100.0" layoutY="13.0" prefHeight="175.0"
+          prefWidth="1400.0" snapToPixel="false" spacing="5.0"/>
 
-            </image>
+    <StackPane fx:id="drawPile" layoutX="511.0" layoutY="333.0" maxHeight="175.0" maxWidth="175.0"
+               prefHeight="100.0" prefWidth="100.0"/>
 
-        </ImageView>
+    <Button fx:id="drawButton" layoutX="100.0" layoutY="400.0" mnemonicParsing="false" visible="false">
+        <graphic>
+            <ImageView fitHeight="100.0" fitWidth="150.0" pickOnBounds="true" preserveRatio="true">
+                <Image url="@../drawButton.png"/>
+            </ImageView>
+        </graphic>
+    </Button>
+    <TextArea fx:id="txtField" editable="false" layoutX="100.0" layoutY="600.0" opacity="0.5" prefHeight="80.0"
+              prefWidth="518.0" wrapText="true" visible="false"/>
 
-        <ImageView fx:id="start" depthTest="INHERIT" fitHeight="300" fitWidth="500" layoutX="611.0" layoutY="216.0" onMouseClicked="#handleStartButton" preserveRatio="true">
+    <Button fx:id="red" layoutX="950.0" layoutY="325.0">
+        <style>
+            -fx-background-radius: 5em;
+            -fx-min-width: 50px;
+            -fx-min-height: 50px;
+            -fx-max-width: 50px;
+            -fx-max-height: 50px;
+            -fx-background-color: red;
+            -fx-border-color: black;
+            -fx-border-radius: 30;
+            visibility: hidden;
+        </style>
+    </Button>
+    <Button fx:id="green" layoutX="950.0" layoutY="425.0">
+        <style>
+            -fx-background-radius: 5em;
+            -fx-min-width: 50px;
+            -fx-min-height: 50px;
+            -fx-max-width: 50px;
+            -fx-max-height: 50px;
+            -fx-background-color: green;
+            -fx-border-color: black;
+            -fx-border-radius: 30;
+            visibility: hidden;
+        </style>
+    </Button>
+    <Button fx:id="yellow" layoutX="900.0" layoutY="375.0">
+        <style>
+            -fx-background-radius: 5em;
+            -fx-min-width: 50px;
+            -fx-min-height: 50px;
+            -fx-max-width: 50px;
+            -fx-max-height: 50px;
+            -fx-background-color: yellow;
+            -fx-border-color: black;
+            -fx-border-radius: 30;
+            -fx-border-radius: 30;
+            visibility: hidden;
+        </style>
+    </Button>
+    <Button fx:id="blue" layoutX="1000.0" layoutY="375.0">
+        <style>
+            -fx-background-radius: 5em;
+            -fx-min-width: 50px;
+            -fx-min-height: 50px;
+            -fx-max-width: 50px;
+            -fx-max-height: 50px;
+            -fx-background-color: blue;
+            -fx-border-color: black;
+            -fx-border-radius: 30;
+            visibility: hidden;
 
-            <image>
+        </style>
+    </Button>
 
-                <Image url="@../logo.png" />
-
-            </image>
-
-        </ImageView>
-        <StackPane fx:id="discardPile" layoutX="675.0" layoutY="333.0" prefHeight="100.0" prefWidth="100.0" visible="true" />
-
-        <Rectangle id="computer" arcHeight="10.0" arcWidth="10.0" fill="BLACK" height="175.0" layoutX="100.0" layoutY="20.0" opacity="0.19" stroke="BLACK" strokeType="INSIDE" width="1400.0" />
-
-        <HBox id="computerHbox" fx:id="computerHBox" layoutX="100.0" layoutY="13.0" prefHeight="175.0" prefWidth="1400.0" snapToPixel="false" spacing="5.0" />
-
-        <StackPane fx:id="drawPile" layoutX="511.0" layoutY="333.0" maxHeight="175.0" maxWidth="175.0" prefHeight="100.0" prefWidth="100.0" />
-
-        <Button fx:id="drawButton" layoutX="100.0" layoutY="400.0" mnemonicParsing="false" onMouseClicked="#drawClicked">
-            <graphic>
-                <ImageView fitHeight="100.0" fitWidth="150.0" pickOnBounds="true" preserveRatio="true">
-                    <image>
-                        <Image url="@../drawButton.png" />
-                    </image>
-                </ImageView>
-            </graphic>
-            <style>
-                visibility: hidden;
-            </style>
-        </Button>
-        <TextArea fx:id="txtField" editable="false" layoutX="100.0" layoutY="600.0" opacity="0.5" prefHeight="80.0" prefWidth="518.0" style="visibility: hidden;" wrapText="true" />
-        <Button fx:id="red" layoutX="950.0" layoutY="325.0" onMouseClicked="#redClicked">
-            <style>
-                -fx-background-radius: 5em;
-                -fx-min-width: 50px;
-                -fx-min-height: 50px;
-                -fx-max-width: 50px;
-                -fx-max-height: 50px;
-                -fx-background-color: red;
-                -fx-border-color: black;
-                -fx-border-radius: 30;
-                visibility: hidden;
-            </style>
-        </Button>
-        <Button fx:id="green" layoutX="950.0" layoutY="425.0" onMouseClicked="#greenClicked">
-            <style>
-                -fx-background-radius: 5em;
-                -fx-min-width: 50px;
-                -fx-min-height: 50px;
-                -fx-max-width: 50px;
-                -fx-max-height: 50px;
-                -fx-background-color: green;
-                -fx-border-color: black;
-                -fx-border-radius: 30;
-                visibility: hidden;
-            </style>
-        </Button>
-
-        <Button fx:id="yellow" layoutX="900.0" layoutY="375.0" onMouseClicked="#yellowClicked">
-            <style>
-                -fx-background-radius: 5em;
-                -fx-min-width: 50px;
-                -fx-min-height: 50px;
-                -fx-max-width: 50px;
-                -fx-max-height: 50px;
-                -fx-background-color: yellow;
-                -fx-border-color: black;
-                -fx-border-radius: 30;
-                -fx-border-radius: 30;
-                visibility: hidden;
-            </style>
-        </Button>
-
-        <Button fx:id="blue" layoutX="1000.0" layoutY="375.0" onMouseClicked="#blueClicked">
-            <style>
-                -fx-background-radius: 5em;
-                -fx-min-width: 50px;
-                -fx-min-height: 50px;
-                -fx-max-width: 50px;
-                -fx-max-height: 50px;
-                -fx-background-color: blue;
-                -fx-border-color: black;
-                -fx-border-radius: 30;
-                visibility: hidden;
-
-            </style>
-        </Button>
-
-        <Rectangle id="human" arcHeight="0.0" arcWidth="0.0" fill="BLACK" height="175.0" layoutX="100.0" layoutY="690.0" onMouseEntered="#select" opacity="0.13" stroke="BLACK" strokeType="INSIDE" width="1400.0" />
-        <HBox fx:id="controlledPlayerHBox" layoutX="100.0" layoutY="700.0" mouseTransparent="false" prefHeight="175.0" prefWidth="1400.0" snapToPixel="false" spacing="5.0" />
-        <TextField fx:id="nameIn" alignment="CENTER" layoutX="681.0" layoutY="542.0" promptText="Inserir Nome Jogador" />
-        <Text fx:id="nameOut" layoutX="100.0" layoutY="580.0" strokeType="OUTSIDE" strokeWidth="0.0" wrappingWidth="69.0" />
-        <Text fx:id="text_uno" layoutX="679.0" layoutY="529.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Carregar no UNO para iniciar o jogo" textAlignment="CENTER">
-         <font>
-            <Font size="12.0" />
-         </font></Text>
-    </children>
-
+    <Rectangle fx:id="playerOne" fill="BLACK" height="175.0" layoutX="100.0"
+               layoutY="690.0" opacity="0.13" stroke="BLACK" strokeType="INSIDE"
+               width="1400.0"/>
+    <HBox fx:id="playerOneHBox" layoutX="100.0" layoutY="700.0" prefHeight="175.0"
+          prefWidth="1400.0" snapToPixel="false" spacing="5.0"/>
+    <TextField fx:id="nameIn" alignment="CENTER" layoutX="691.0" layoutY="558.0" promptText="Inserir Nome Jogador"/>
+    <Text fx:id="nameOut1" layoutX="100.0" layoutY="580.0" strokeType="OUTSIDE" strokeWidth="0.0"
+          wrappingWidth="69.0" visible="false">
+        <font>
+            <Font size="12.0"/>
+        </font>
+    </Text>
+    <Text fx:id="nameOut2" layoutX="100.0" layoutY="253.0" strokeType="OUTSIDE" strokeWidth="0.0" wrappingWidth="69.0"
+          visible="false">
+        <font>
+            <Font size="12.0"/>
+        </font>
+    </Text>
+    <Text fx:id="text_uno" layoutX="679.0" layoutY="529.0" strokeType="OUTSIDE" strokeWidth="0.0"
+          text="Carregar no UNO para iniciar o jogo" textAlignment="CENTER">
+        <font>
+            <Font size="12.0"/>
+        </font>
+    </Text>
+    <Text fx:id="text_wait" layoutX="611.0" layoutY="216.0" strokeType="OUTSIDE" strokeWidth="0.0"
+          text="Aguarde a entrada de um adversário..." textAlignment="CENTER">
+        <font>
+            <Font size="25.0"/>
+        </font>
+    </Text>
 </AnchorPane>
