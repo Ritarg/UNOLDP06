@@ -6,6 +6,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 
 import java.io.*;
@@ -29,10 +30,12 @@ public class Client extends Application {
     static ObjectInputStream objIn;
     private GameControls instance;
     private Stage stage;
+    private String opponentName;
 
     @Override
     public void start(Stage primaryStage) throws IOException {
 
+        Platform.setImplicitExit(false);
         this.stage = primaryStage;
         Parent root = FXMLLoader.load(Objects.requireNonNull(getClass().getResource("playingField.fxml")));
         Scene scene = new Scene(root);
@@ -60,6 +63,7 @@ public class Client extends Application {
 
         // Thread que serve para o cliente enviar mensagens para o servidor
         Thread enviarMensagem = new Thread(() -> {
+            Platform.setImplicitExit(false);
             instance = new GameControls(out, objOut);
             FXMLController.handleEvents(instance);
         });
@@ -67,6 +71,7 @@ public class Client extends Application {
         Thread lerMensagem = new Thread(() -> {
             while (true) {
                 try {
+                    Platform.setImplicitExit(false);
                     String msg = in.readUTF();
                     System.out.println(msg);
 
@@ -81,60 +86,96 @@ public class Client extends Application {
                     } else if (msg.startsWith("#nome")) {
                         // msg: #nome-nomeJogador ou #nome-nomeJogador-pronto-vez
                         String[] msgSplit = msg.split("-");
+                        opponentName = msgSplit[1];
                         DeckInfo opponentDeck = (DeckInfo) objIn.readObject();
                         instance.setOpponentDeck(opponentDeck);
                         // verifica se o jogo se encontra pronto para começar
                         if (msgSplit.length == 4 && msgSplit[2].equals("pronto")) {
                             instance.initGame(Boolean.parseBoolean(msgSplit[3]), false);
+                        }
+                        Platform.runLater(() -> {
                             // esconde label de espera e mostra o jogo
                             instance.setVisibilty(true);
-                            Platform.runLater(() -> {
-                                FXMLController.nameOut1Static.setVisible(true);
-                                FXMLController.nameInStatic.setVisible(false);
-                                FXMLController.text_unoStatic.setVisible(false);
-                                System.out.println(FXMLController.txtFieldStatic.isVisible());
-                                System.out.println(FXMLController.drawPileStatic.isVisible());
-                                System.out.println(FXMLController.discardPileStatic.isVisible());
-                                System.out.println(FXMLController.playerOneHBoxStatic.isVisible());
-                                System.out.println(FXMLController.playerTwoHBoxStatic.isVisible());
-                                System.out.println(FXMLController.drawButtonStatic.isVisible());
-                            });
-                        }
+                            FXMLController.nameOut1Static.setVisible(true);
+                            FXMLController.nameOut2Static.setText("Jogador: " + opponentName);
+                            FXMLController.nameOut2Static.setVisible(true);
+                            FXMLController.nameInStatic.setVisible(false);
+                            FXMLController.text_unoStatic.setVisible(false);
+                        });
+
                     } else if (msg.startsWith("#pronto")) {
                         // msg: #pronto-nomeJogador-vez
+                        String[] msgSplit = msg.split("-");
+                        opponentName = msgSplit[1];
+                        //objIn.defaultReadObject();
                         DeckInfo opponentDeck = (DeckInfo) objIn.readObject();
                         instance.setOpponentDeck(opponentDeck);
-                        String[] msgSplit = msg.split("-");
+                        instance.setDrawPile(opponentDeck.getDrawPile());
                         instance.initGame(Boolean.parseBoolean(msgSplit[2]), true);
-                        // esconde label de espera e mostra o jogo
-                        instance.setVisibilty(true);
+
                         Platform.runLater(() -> {
+                            // esconde label de espera e mostra o jogo
+                            instance.setVisibilty(true);
                             FXMLController.nameOut1Static.setVisible(true);
+                            FXMLController.nameOut2Static.setText("Jogador: " + opponentName);
+                            FXMLController.nameOut2Static.setVisible(true);
                             FXMLController.nameInStatic.setVisible(false);
                             FXMLController.text_unoStatic.setVisible(false);
-                            System.out.println(FXMLController.txtFieldStatic.isVisible());
-                            System.out.println(FXMLController.drawPileStatic.isVisible());
-                            System.out.println(FXMLController.discardPileStatic.isVisible());
-                            System.out.println(FXMLController.playerOneHBoxStatic.isVisible());
-                            System.out.println(FXMLController.playerTwoHBoxStatic.isVisible());
-                            System.out.println(FXMLController.drawButtonStatic.isVisible());
                         });
+
                     } else if (msg.startsWith("#card-drawn")) {
+                        // msg: #card-drawn-true
+                        String[] msgSplit = msg.split("-");
+                        if (msgSplit.length == 3 && Boolean.parseBoolean(msgSplit[2])) {
+                            instance.getDiscardPile().add(instance.getDrawPile().pop());
+                        } else {
+                            // msg: #card-drawn
+                            // update drwPile e nr de cartas no campo adversario
+                            Platform.runLater(() -> {
+                                FXMLController.playerTwoHBoxStatic.getChildren().add(new ImageView(instance.getDrawPile().pop().getBackIcon()));
+                                instance.changeTurns(true);
+                            });
+                        }
                         instance.logDecks();
-                        instance.getDiscardPile().add(instance.getDrawPile().pop());
-                        // esconde label de espera e mostra o jogo
-                        instance.setVisibilty(true);
-                        instance.logDecks();
+
                         Platform.runLater(() -> {
+                            // esconde label de espera e mostra o jogo
+                            instance.setVisibilty(true);
                             FXMLController.nameOut1Static.setVisible(true);
+                            FXMLController.nameOut2Static.setVisible(true);
                             FXMLController.nameInStatic.setVisible(false);
                             FXMLController.text_unoStatic.setVisible(false);
-                            System.out.println(FXMLController.txtFieldStatic.isVisible());
-                            System.out.println(FXMLController.drawPileStatic.isVisible());
-                            System.out.println(FXMLController.discardPileStatic.isVisible());
-                            System.out.println(FXMLController.playerOneHBoxStatic.isVisible());
-                            System.out.println(FXMLController.playerTwoHBoxStatic.isVisible());
-                            System.out.println(FXMLController.drawButtonStatic.isVisible());
+                        });
+
+                    } else if (msg.startsWith("#discard")) {
+                        String[] msgSplit = msg.split("-");
+                        // msg: #discard-wild-Number ou #discard-wild-joker
+                        if (msgSplit.length >= 3) {
+                            if (msgSplit[2].equals("joker")) {
+
+                            } else {
+                                for (int i = 0; i < Integer.parseInt(msgSplit[2]); i++) {
+                                    instance.drawCard(true);
+                                    instance.changeTurns(true);
+                                }
+                            }
+
+                        } else {
+                            // msg: #discard
+                            Platform.runLater(() -> {
+                                FXMLController.playerTwoHBoxStatic.getChildren().add(new ImageView(instance.getDrawPile().pop().getBackIcon()));
+                                instance.changeTurns(true);
+                            });
+                        }
+                        instance.logDecks();
+
+                        Platform.runLater(() -> {
+                            // esconde label de espera e mostra o jogo
+                            instance.setVisibilty(true);
+                            FXMLController.nameOut1Static.setVisible(true);
+                            FXMLController.nameOut2Static.setVisible(true);
+                            FXMLController.nameInStatic.setVisible(false);
+                            FXMLController.text_unoStatic.setVisible(false);
                         });
                     }
 

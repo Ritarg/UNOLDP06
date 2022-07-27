@@ -5,6 +5,7 @@
  */
 package Uno;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -75,6 +76,9 @@ public class FXMLController implements Initializable {
     private Text nameOut1;
     public static Text nameOut1Static;
     @FXML
+    private Text nameOut2;
+    public static Text nameOut2Static;
+    @FXML
     private Text text_uno;
     public static Text text_unoStatic;
     @FXML
@@ -99,6 +103,7 @@ public class FXMLController implements Initializable {
         startStatic = start;
         nameInStatic = nameIn;
         nameOut1Static = nameOut1;
+        nameOut2Static = nameOut2;
         text_unoStatic = text_uno;
         text_waitStatic = text_wait;
         text_waitStatic.setVisible(false);
@@ -111,20 +116,26 @@ public class FXMLController implements Initializable {
 
         startStatic.setOnMouseClicked(event -> {
 
-            try {
-                instance.handleStartButton();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            Platform.runLater(() -> {
+                try {
+                    instance.handleStartButton();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
         });
 
         drawButtonStatic.setOnMouseClicked(event -> {
 
-            try {
-                instance.drawCard(true);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            Platform.runLater(() -> {
+                try {
+                    instance.drawCard(true);
+                    // carta retirada, muda a vez
+                    instance.changeTurns(true);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
         });
 
         redStatic.setOnMouseClicked(event -> {

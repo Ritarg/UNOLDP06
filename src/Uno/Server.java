@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Stack;
 
 public class Server {
     private static final int serverPort = 18080;
@@ -67,6 +68,8 @@ public class Server {
         private boolean isReady;
         private static String recebido;
         private List<IndividualCardView> deck;
+        private Stack<IndividualCardView> drawPile;
+
 
         private ClientHandler(Socket s, String code, DataInputStream dis, DataOutputStream dos, int id, ObjectInputStream objIn, ObjectOutputStream objOut) {
 
@@ -109,7 +112,7 @@ public class Server {
 
             for (ClientHandler c : listaClientes) {
                 if (!c.code.equals(code)) {
-                    result = new DeckInfo(c.deck);
+                    result = new DeckInfo(c.deck, c.drawPile);
                 }
             }
 
@@ -159,17 +162,18 @@ public class Server {
                     // receber as mensagens dos clientes e processa-las
                     try {
                         recebido = dis.readUTF();
-
                         if (recebido.startsWith("#nome")) {
                             // msg: #nome-nomeJogador
                             name = recebido.split("-")[1];
                             System.out.println("Jogador " + name + " pronto.");
                             DeckInfo deckInfo = (DeckInfo) objIn.readObject();
                             deck = deckInfo.getDeck();
+                            drawPile = deckInfo.getDrawPile();
                             isReady = true;
                             // quando tiver 2 jogadores inicia o jogo
                             boolean ready = isReady();
                             boolean turn = this.randomTurn();
+                            //boolean turn = true;
 
                             for (ClientHandler c : listaClientes) {
                                 if (!c.code.equals(code) && c.isloggedin) {
@@ -184,7 +188,7 @@ public class Server {
                                     c.objOut.writeObject(deckInfo);
                                 } else {
                                     if (ready) {
-                                        // #pronto-nomeAdversario-vez
+                                        // enviar: #pronto-nomeAdversario-vez
                                         String msg = "#pronto-" + getOpponentName(code) + "-" + turn;
                                         System.out.println("Mensagem enviada: " + msg);
                                         c.dos.writeUTF(msg);
@@ -193,8 +197,18 @@ public class Server {
                                     }
                                 }
                             }
+
                         } else if (recebido.startsWith("#card-drawn")) {
-                            // #card-drawn
+                            // #card-drawn-true ou #card-drawn
+                            for (ClientHandler c : listaClientes) {
+                                if (!c.code.equals(code) && c.isloggedin) {
+                                    System.out.println("Mensagem enviada: " + recebido);
+                                    c.dos.writeUTF(recebido);
+                                }
+                            }
+
+                        } else if (recebido.startsWith("#discard")) {
+                            // #discard ou #discard-wild-Number
                             for (ClientHandler c : listaClientes) {
                                 if (!c.code.equals(code) && c.isloggedin) {
                                     System.out.println("Mensagem enviada: " + recebido);
@@ -202,7 +216,6 @@ public class Server {
                                 }
                             }
                         }
-
                     } catch (IOException | ClassNotFoundException e) {
                         throw new RuntimeException(e);
                     }
