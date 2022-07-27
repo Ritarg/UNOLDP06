@@ -92,6 +92,12 @@ public class Client extends Application {
                                 FXMLController.nameOut1Static.setVisible(true);
                                 FXMLController.nameInStatic.setVisible(false);
                                 FXMLController.text_unoStatic.setVisible(false);
+                                System.out.println(FXMLController.txtFieldStatic.isVisible());
+                                System.out.println(FXMLController.drawPileStatic.isVisible());
+                                System.out.println(FXMLController.discardPileStatic.isVisible());
+                                System.out.println(FXMLController.playerOneHBoxStatic.isVisible());
+                                System.out.println(FXMLController.playerTwoHBoxStatic.isVisible());
+                                System.out.println(FXMLController.drawButtonStatic.isVisible());
                             });
                         }
                     } else if (msg.startsWith("#pronto")) {
@@ -106,6 +112,29 @@ public class Client extends Application {
                             FXMLController.nameOut1Static.setVisible(true);
                             FXMLController.nameInStatic.setVisible(false);
                             FXMLController.text_unoStatic.setVisible(false);
+                            System.out.println(FXMLController.txtFieldStatic.isVisible());
+                            System.out.println(FXMLController.drawPileStatic.isVisible());
+                            System.out.println(FXMLController.discardPileStatic.isVisible());
+                            System.out.println(FXMLController.playerOneHBoxStatic.isVisible());
+                            System.out.println(FXMLController.playerTwoHBoxStatic.isVisible());
+                            System.out.println(FXMLController.drawButtonStatic.isVisible());
+                        });
+                    } else if (msg.startsWith("#card-drawn")) {
+                        instance.logDecks();
+                        instance.getDiscardPile().add(instance.getDrawPile().pop());
+                        // esconde label de espera e mostra o jogo
+                        instance.setVisibilty(true);
+                        instance.logDecks();
+                        Platform.runLater(() -> {
+                            FXMLController.nameOut1Static.setVisible(true);
+                            FXMLController.nameInStatic.setVisible(false);
+                            FXMLController.text_unoStatic.setVisible(false);
+                            System.out.println(FXMLController.txtFieldStatic.isVisible());
+                            System.out.println(FXMLController.drawPileStatic.isVisible());
+                            System.out.println(FXMLController.discardPileStatic.isVisible());
+                            System.out.println(FXMLController.playerOneHBoxStatic.isVisible());
+                            System.out.println(FXMLController.playerTwoHBoxStatic.isVisible());
+                            System.out.println(FXMLController.drawButtonStatic.isVisible());
                         });
                     }
 

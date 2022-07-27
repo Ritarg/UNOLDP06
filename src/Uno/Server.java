@@ -6,7 +6,6 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.Stack;
 
 public class Server {
     private static final int serverPort = 18080;
@@ -68,8 +67,6 @@ public class Server {
         private boolean isReady;
         private static String recebido;
         private List<IndividualCardView> deck;
-        private Stack<IndividualCardView> drawPile;
-
 
         private ClientHandler(Socket s, String code, DataInputStream dis, DataOutputStream dos, int id, ObjectInputStream objIn, ObjectOutputStream objOut) {
 
@@ -112,7 +109,7 @@ public class Server {
 
             for (ClientHandler c : listaClientes) {
                 if (!c.code.equals(code)) {
-                    result = new DeckInfo(c.deck, c.drawPile);
+                    result = new DeckInfo(c.deck);
                 }
             }
 
@@ -169,7 +166,6 @@ public class Server {
                             System.out.println("Jogador " + name + " pronto.");
                             DeckInfo deckInfo = (DeckInfo) objIn.readObject();
                             deck = deckInfo.getDeck();
-                            drawPile = deckInfo.getDrawPile();
                             isReady = true;
                             // quando tiver 2 jogadores inicia o jogo
                             boolean ready = isReady();
@@ -195,6 +191,14 @@ public class Server {
                                         DeckInfo opponentDeck = getOpponentDeck(code);
                                         c.objOut.writeObject(opponentDeck);
                                     }
+                                }
+                            }
+                        } else if (recebido.startsWith("#card-drawn")) {
+                            // #card-drawn
+                            for (ClientHandler c : listaClientes) {
+                                if (!c.code.equals(code) && c.isloggedin) {
+                                    System.out.println("Mensagem enviada: " + recebido);
+                                    c.dos.writeUTF(recebido);
                                 }
                             }
                         }

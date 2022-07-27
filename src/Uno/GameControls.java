@@ -17,13 +17,14 @@ import java.util.Stack;
 public class GameControls {
     private int index;
     private ControlUNO control;
-    //Variavel que corresponde as cartas do tipo Joker
     private boolean isWild;
     private boolean isGameWon = false;
     private DeckInfo myDeck;
     private DeckInfo opponentDeck;
     private DataOutputStream dos;
     private ObjectOutputStream objectOut;
+    private Stack<IndividualCardView> drawPile;
+    private Stack<IndividualCardView> discardPile;
 
     /**
      * Default constructor
@@ -39,6 +40,8 @@ public class GameControls {
         this.dos = dos;
         this.objectOut = objOut;
         this.control = new ControlUNO();
+        this.drawPile = control.cards().getDrawPile();
+        this.discardPile = control.cards().getDiscardPile();
     }
 
     //Botão inicial, Imagem/Icon do UNO que ao carregar inicia o Jogo
@@ -56,10 +59,6 @@ public class GameControls {
             FXMLController.anchorStatic.getChildren().remove(FXMLController.startStatic);
             // set player name
             this.control.getPlayer().setName(name);
-            // desenha DrawPile
-            for (IndividualCardView card : control.cards().getDrawPile()) {
-                FXMLController.drawPileStatic.getChildren().add(new ImageView(card.getBackIcon()));
-            }
             try {
                 writeString("#nome-" + this.control.getPlayer().getName());
                 // As cartas são baralhadas para dar aos jogadores
@@ -72,17 +71,16 @@ public class GameControls {
         });
     }
 
-    public DeckInfo deal() {
+    private DeckInfo deal() {
 
         // da 7 cartas
-        final Stack<IndividualCardView> drawPile = control.cards().getDrawPile();
-
         for (int i = 0; i < 7; i++) {
             control.getPlayer().draw(drawPile.pop());
             FXMLController.drawPileStatic.getChildren().remove(FXMLController.drawPileStatic.getChildren().size() - 1);
         }
+        logDecks();
 
-        return myDeck = new DeckInfo(control.getPlayer().getCards(), drawPile);
+        return myDeck = new DeckInfo(control.getPlayer().getCards());
     }
 
     public void initGame(final boolean myTurn, final boolean isFirstMoveDone) throws IOException {
@@ -102,17 +100,23 @@ public class GameControls {
             // a primeira "jogada" é a carta que sai da drawPile para a discardPile, para dar início ao jogo
             // so pode ocorrer uma vez
             if (!isFirstMoveDone) {
-                final IndividualCardView firstCard = control.cards().getDrawPile().pop();
-                control.cards().getDiscardPile().add(firstCard);
+                final IndividualCardView firstCard = drawPile.pop();
+                discardPile.add(firstCard);
                 logDecks();
                 // define a carta atual
                 setCurrentCard();
                 // atualiza drawPileStatic e discardPileStatic
-                FXMLController.drawPileStatic.getChildren().remove(FXMLController.drawPileStatic.getChildren().size() - 1);
+                final int i = FXMLController.drawPileStatic.getChildren().size() - 1;
+                FXMLController.drawPileStatic.getChildren().remove(i);
                 FXMLController.discardPileStatic.getChildren().add(new ImageView(firstCard.getIcon()));
+                try {
+                    writeString("#card-drawn-" + i);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             } else {
                 // apenas desenha
-                // validar instancias do initGame
+                setVisibilty(false);
             }
         });
     }
@@ -130,20 +134,20 @@ public class GameControls {
             FXMLController.drawPileStatic.getChildren().remove(FXMLController.drawPileStatic.getChildren().size() - 1);
             // se é a minha vez, desenha carta mostra para cima, senao mostra carta virada para baixo no campo do adversario
             if (myTurn) {
-                ImageView temp = new ImageView(control.cards().getDrawPile().peek().getIcon());
+                ImageView temp = new ImageView(drawPile.peek().getIcon());
                 FXMLController.playerOneHBoxStatic.getChildren().add(temp);
             } else {
-                ImageView temp = new ImageView(control.cards().getDrawPile().peek().getBackIcon());
+                ImageView temp = new ImageView(drawPile.peek().getBackIcon());
                 FXMLController.playerTwoHBoxStatic.getChildren().add(temp);
             }
-            control.getPlayer().draw(control.cards().getDrawPile().pop());
+            control.getPlayer().draw(drawPile.pop());
             FXMLController.txtFieldStatic.setText("\nJogaste uma carta, é a vez do adversario");
             FXMLController.txtFieldStatic.setStyle("-fx-text-fill: red; -fx-font-size: 16px;");
         });
         // carta retirada, muda a vez
         control.getPlayer().setMyTurn(false);
         // envia msg ao outro jogador
-        writeString("#card-draw-" + control.getPlayer());
+        writeString("#card-drawn-" + control.getPlayer());
     }
 
 
@@ -151,7 +155,7 @@ public class GameControls {
     public void discard(final int cardIndex) {
 
         // adiciona a discardPile
-        control.cards().getDiscardPile().push(control.getPlayer().remove(control.getPlayer().getCards().get(cardIndex)));
+        discardPile.push(control.getPlayer().remove(control.getPlayer().getCards().get(cardIndex)));
         Platform.runLater(() -> {
             if (this.control.getPlayer().isMyTurn()) {
                 FXMLController.discardPileStatic.getChildren().add(FXMLController.playerOneHBoxStatic.getChildren().remove(cardIndex));
@@ -238,7 +242,7 @@ public class GameControls {
             String substring = playerCard.substring(playerCard.length() - 9, playerCard.length() - 2);
             System.out.println(substring);
             if (substring.equals("plustwo") && control.matches(control.getPlayer().getCards().get(index))) {
-                control.cards().getDiscardPile().push(control.getPlayer().getCards().get(index));
+                discardPile.push(control.getPlayer().getCards().get(index));
                 discard(index);
                 setCurrentCard();
                 for (int i = 0; i < 2; i++) {
@@ -256,7 +260,7 @@ public class GameControls {
                 }
                 //control.setCurrentPlayer(control.getPlayerTwo());
             } else if (control.matches(control.getPlayer().getCards().get(index))) {
-                control.cards().getDiscardPile().push(control.getPlayer().getCards().get(index));
+                discardPile.push(control.getPlayer().getCards().get(index));
                 discard(index);
                 setCurrentCard();
                 if (control.getPlayer().getCards().size() == 0) {
@@ -273,7 +277,7 @@ public class GameControls {
     }
 
     /* Baralha as cartas */
-    public void reshuffle() {
+    private void reshuffle() {
 
         control.cards().shuffleDrawPile();
 
@@ -281,7 +285,7 @@ public class GameControls {
         if (FXMLController.discardPileStatic.getChildren().size() > 0) {
             FXMLController.discardPileStatic.getChildren().clear();
         }
-        for (IndividualCardView drawPile : control.cards().getDrawPile()) {
+        for (IndividualCardView drawPile : drawPile) {
             FXMLController.drawPileStatic.getChildren().add(new ImageView(drawPile.getBackIcon()));
         }
 
@@ -391,10 +395,7 @@ public class GameControls {
         });
     }
 
-    private void logDecks() {
-
-        final Stack<IndividualCardView> drawPile = control.cards().getDrawPile();
-        final Stack<IndividualCardView> discardPile = control.cards().getDiscardPile();
+    public void logDecks() {
 
         System.out.println("[TABLE INFO]" + "\n------------------\n" + "[DrawPile][" + drawPile.size() + "]" + drawPile);
         System.out.println("[DiscardPile][" + discardPile.size() + "]" + discardPile + "\n------------------\n");
@@ -402,12 +403,32 @@ public class GameControls {
 
     private void setCurrentCard() {
 
-        control.setCurrentCard(control.cards().getDiscardPile().peek());
+        control.setCurrentCard(discardPile.peek());
     }
 
     public void setOpponentDeck(final DeckInfo opponentDeck) {
 
         this.opponentDeck = opponentDeck;
+    }
+
+    public Stack<IndividualCardView> getDrawPile() {
+
+        return drawPile;
+    }
+
+    public void setDrawPile(final Stack<IndividualCardView> drawPile) {
+
+        this.drawPile = drawPile;
+    }
+
+    public Stack<IndividualCardView> getDiscardPile() {
+
+        return discardPile;
+    }
+
+    public void setDiscardPile(final Stack<IndividualCardView> discardPile) {
+
+        this.discardPile = discardPile;
     }
 
     private void writeString(final String msg) throws IOException {
